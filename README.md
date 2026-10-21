@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# soulinspire-mock-api
-=======
 # Soulinspire Mock API
 
 A stand-in for the Soulinspire API that serves **dummy data from memory**. It has the same endpoints, request bodies, response shapes and error formats as the real API (`soulinspire-api`), so the storefront (`soulinspire-web`) works against it unchanged.
@@ -130,4 +127,3 @@ curl -H "Authorization: Bearer mock-admin-key" "http://localhost:4000/api/admin/
 - No rate limits, no security headers, any website may call it.
 - Payments are never real; webhooks aren't signature-checked.
 - Unpaid card orders are never cancelled automatically.
->>>>>>> 564d4c8 (Initial commit: soulinspire-mock-api)
