@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { timingSafeEqual } from "node:crypto";
 import { CATEGORIES, INTENTIONS } from "./data/catalog.js";
 import { computeTotals, estimateDelivery, findPromo, FREE_DELIVERY_OVER, POD_ZONES, VAT_RATE, ZONES } from "./pricing.js";
 import { createStore } from "./store.js";
@@ -29,6 +30,14 @@ class ApiError extends Error {
   }
 }
 const fail = (status, code, message, extra) => { throw new ApiError(status, code, message, extra); };
+const DEFAULT_ADMIN_KEY = "mock-admin-key";
+
+// Compares in constant time, so response timing doesn't reveal how much of a guess was right.
+function sameKey(given, expected) {
+  const a = Buffer.from(given);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 export function createApp(config = {}) {
   const {
@@ -115,6 +124,13 @@ export function createApp(config = {}) {
   const requireAdmin = (req, _res, next) => {
     const token = (req.get("authorization") || "").replace(/^Bearer\s+/i, "");
     if (token !== adminApiKey) return next(new ApiError(401, "unauthorised", `Send "Authorization: Bearer ${adminApiKey}" to use the admin endpoints.`));
+    if (!sameKey(token, adminApiKey)) {
+     // Only the public default key is ever shown. A key set with ADMIN_API_KEY is never echoed back.
+     const hint = adminApiKey === DEFAULT_ADMIN_KEY
+     ? `Send "Authorization: Bearer ${DEFAULT_ADMIN_KEY}" to use the admin endpoints.`
+     : "Send a valid admin key in the Authorization header.";
+     return next(new ApiError(401, "unauthorised", hint));
+   }
     next();
   };
 
