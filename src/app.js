@@ -123,7 +123,7 @@ export function createApp(config = {}) {
 
   const requireAdmin = (req, _res, next) => {
     const token = (req.get("authorization") || "").replace(/^Bearer\s+/i, "");
-    if (token !== adminApiKey) return next(new ApiError(401, "unauthorised", `Send "Authorization: Bearer ${adminApiKey}" to use the admin endpoints.`));
+    
     if (!sameKey(token, adminApiKey)) {
      // Only the public default key is ever shown. A key set with ADMIN_API_KEY is never echoed back.
      const hint = adminApiKey === DEFAULT_ADMIN_KEY
