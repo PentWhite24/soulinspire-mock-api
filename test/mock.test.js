@@ -146,7 +146,21 @@ test("mock controls: forced errors, delay, reset", async () => {
   assert.equal((await call("/products/journal-rooted")).body.product.stock, 24);
   assert.equal((await call("/admin/orders", { headers: ADMIN })).body.total, 10);
 });
-
+test("admin: a key set with ADMIN_API_KEY is required and never echoed back", async () => {
+  const secret = "s3cret-admin-key-from-key-vault";
+  const made = createApp({ log: false, adminApiKey: secret });
+  const srv = made.app.listen(0);
+  await new Promise((r) => srv.once("listening", r));
+  const url = `http://localhost:${srv.address().port}/api/admin/orders`;
+  try {
+    const denied = await fetch(url, { headers: { Authorization: "Bearer mock-admin-key" } });
+    assert.equal(denied.status, 401);
+    assert.ok(!(await denied.text()).includes(secret));
+    assert.equal((await fetch(url, { headers: { Authorization: `Bearer ${secret}` } })).status, 200);
+  } finally {
+    srv.close();
+  }
+});
 test("CORS allows any storefront origin", async () => {
   const res = await fetch(base + "/products", { headers: { Origin: "http://localhost:3000" } });
   assert.equal(res.headers.get("access-control-allow-origin"), "http://localhost:3000");
